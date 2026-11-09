@@ -30,7 +30,7 @@
       background: var(--card-bg);
       border: 1px solid var(--border-color);
       border-radius: 8px;
-      max-width: 680px;
+      max-width: 760px;
       width: 100%;
       padding: 24px;
       box-sizing: border-box;
@@ -96,23 +96,25 @@
       outline-offset: 2px;
     }
 
-    /* Chart Container */
+    /* Chart Container (6 harmonics + Upper Air/Bite) */
     .chart-wrapper {
       border-left: 2px solid var(--text-dark);
       border-bottom: 2px solid var(--text-dark);
-      height: 180px;
+      height: 200px;
       display: flex;
       align-items: flex-end;
-      justify-content: space-around;
+      justify-content: space-between;
       padding: 0 10px 10px 10px;
       margin-bottom: 8px;
+      box-sizing: border-box;
+      gap: 8px;
     }
 
     .harmonic-col {
       display: flex;
       flex-direction: column;
       align-items: center;
-      width: 18%;
+      flex: 1;
       height: 100%;
       justify-content: flex-end;
     }
@@ -126,15 +128,16 @@
     }
 
     .harmonic-label {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       font-weight: 600;
       margin-top: 6px;
       text-align: center;
     }
 
     .harmonic-freq {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: #4B5563;
+      text-align: center;
     }
 
     /* Status live region */
@@ -147,16 +150,6 @@
       font-size: 0.95rem;
       line-height: 1.4;
     }
-
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      overflow: hidden;
-      clip: rect(0,0,0,0);
-      border: 0;
-    }
   </style>
 </head>
 <body>
@@ -164,7 +157,7 @@
   <main class="interactive-card" role="region" aria-labelledby="interactive-title">
     <h2 id="interactive-title">Interactive Comparison: Saxophone vs. Clarinet Spectrum</h2>
     <p class="instructions" id="desc-instruction">
-      Select an instrument to view its harmonic balance on the frequency staircase and listen to its raw synthesized tone (B4 note, 494 Hz fundamental).
+      Select an instrument to view its harmonic balance across the 6 core harmonics plus high bite on pitch B4 (494 Hz). Press <strong>Play Sound</strong> or use the <strong>Spacebar</strong> to audition.
     </p>
 
     <div class="controls-row" role="group" aria-label="Instrument Selection">
@@ -174,12 +167,12 @@
       <button id="btn-clarinet" class="btn-toggle" aria-pressed="false" aria-describedby="status-content">
         Clarinet (B4)
       </button>
-      <button id="btn-play" class="btn-audio" aria-label="Play 1.5-second audio tone">
-        ▶ Play Sound
+      <button id="btn-play" class="btn-audio" aria-label="Play audio tone">
+        ▶ Play Sound (Spacebar)
       </button>
     </div>
 
-    <!-- Graphical Chart Representation -->
+    <!-- Graphical Chart Representation (6 harmonics + upper brightness) -->
     <div class="chart-wrapper" aria-hidden="true">
       <div class="harmonic-col">
         <div id="bar-1" class="harmonic-bar" style="height: 95%;"></div>
@@ -188,32 +181,46 @@
       </div>
       <div class="harmonic-col">
         <div id="bar-2" class="harmonic-bar" style="height: 75%;"></div>
-        <span class="harmonic-label">2nd</span>
+        <span class="harmonic-label">2nd (Even)</span>
         <span class="harmonic-freq">988 Hz</span>
       </div>
       <div class="harmonic-col">
         <div id="bar-3" class="harmonic-bar" style="height: 60%;"></div>
-        <span class="harmonic-label">3rd</span>
+        <span class="harmonic-label">3rd (Odd)</span>
         <span class="harmonic-freq">1482 Hz</span>
       </div>
       <div class="harmonic-col">
-        <div id="bar-4" class="harmonic-bar" style="height: 45%;"></div>
-        <span class="harmonic-label">4th</span>
+        <div id="bar-4" class="harmonic-bar" style="height: 48%;"></div>
+        <span class="harmonic-label">4th (Even)</span>
         <span class="harmonic-freq">1976 Hz</span>
+      </div>
+      <div class="harmonic-col">
+        <div id="bar-5" class="harmonic-bar" style="height: 38%;"></div>
+        <span class="harmonic-label">5th (Odd)</span>
+        <span class="harmonic-freq">2470 Hz</span>
+      </div>
+      <div class="harmonic-col">
+        <div id="bar-6" class="harmonic-bar" style="height: 28%;"></div>
+        <span class="harmonic-label">6th (Even)</span>
+        <span class="harmonic-freq">2964 Hz</span>
+      </div>
+      <div class="harmonic-col">
+        <div id="bar-upper" class="harmonic-bar" style="height: 20%;"></div>
+        <span class="harmonic-label">>6th (Air)</span>
+        <span class="harmonic-freq">Bite</span>
       </div>
     </div>
 
     <!-- Live Region for Screen Readers -->
     <div class="status-panel" role="status" aria-live="polite">
       <div id="status-content">
-        <strong>Currently Displaying: Saxophone (B4, 494 Hz).</strong> Contains both even and odd harmonics (494 Hz, 988 Hz, 1482 Hz, 1976 Hz), resulting in a full, bright, and buzzy tone.
+        <strong>Currently Displaying: Saxophone (B4, 494 Hz).</strong> Conical bore produces the complete harmonic staircase (prominent even harmonics at 988, 1976, and 2964 Hz, plus odd harmonics and upper bite), resulting in a full, bright, and buzzy timbre.
       </div>
     </div>
   </main>
 
   <script>
-    // Pure Web Audio API synthesis logic strictly adhering to the document parameters
-    const FUNDAMENTAL = 494.0; // B4 note from Topic 1.1 text
+    const FUNDAMENTAL = 494.0; // B4 note from Topic 1.1
     let currentInstrument = 'sax';
     let audioCtx = null;
 
@@ -226,7 +233,10 @@
       b1: document.getElementById('bar-1'),
       b2: document.getElementById('bar-2'),
       b3: document.getElementById('bar-3'),
-      b4: document.getElementById('bar-4')
+      b4: document.getElementById('bar-4'),
+      b5: document.getElementById('bar-5'),
+      b6: document.getElementById('bar-6'),
+      bUpper: document.getElementById('bar-upper')
     };
 
     function setInstrument(type) {
@@ -234,34 +244,45 @@
       if (type === 'sax') {
         btnSax.setAttribute('aria-pressed', 'true');
         btnClarinet.setAttribute('aria-pressed', 'false');
-        // Visual heights reflecting full harmonic staircase
+
+        // Saxophone: Full staircase with even and odd harmonics 2-6 + bite
         bars.b1.style.height = '95%';
         bars.b2.style.height = '75%';
         bars.b3.style.height = '60%';
-        bars.b4.style.height = '45%';
+        bars.b4.style.height = '48%';
+        bars.b5.style.height = '38%';
+        bars.b6.style.height = '28%';
+        bars.bUpper.style.height = '20%';
+
         bars.b2.style.backgroundColor = 'var(--bar-active)';
         bars.b4.style.backgroundColor = 'var(--bar-active)';
+        bars.b6.style.backgroundColor = 'var(--bar-active)';
+        bars.bUpper.style.backgroundColor = 'var(--bar-active)';
 
-        statusContent.innerHTML = "<strong>Currently Displaying: Saxophone (B4, 494 Hz).</strong> Full harmonic series with prominent even and odd harmonics (494 Hz, 988 Hz, 1482 Hz, 1976 Hz), producing a bright, rich timbral spectrum.";
+        statusContent.innerHTML = "<strong>Currently Displaying: Saxophone (B4, 494 Hz).</strong> Conical bore produces the complete harmonic staircase (prominent even harmonics at 988, 1976, and 2964 Hz, plus odd harmonics and upper bite), resulting in a full, bright, and buzzy timbre.";
       } else {
         btnSax.setAttribute('aria-pressed', 'false');
         btnClarinet.setAttribute('aria-pressed', 'true');
-        // Visual heights reflecting suppression of even harmonics
+
+        // Clarinet: Strong odd harmonics (3rd, 5th), heavy suppression of even (2nd, 4th, 6th) and low bite
         bars.b1.style.height = '95%';
-        bars.b2.style.height = '6%'; // Suppressed
+        bars.b2.style.height = '5%';
         bars.b3.style.height = '65%';
-        bars.b4.style.height = '6%'; // Suppressed
+        bars.b4.style.height = '5%';
+        bars.b5.style.height = '42%';
+        bars.b6.style.height = '4%';
+        bars.bUpper.style.height = '5%';
+
         bars.b2.style.backgroundColor = 'var(--bar-suppressed)';
         bars.b4.style.backgroundColor = 'var(--bar-suppressed)';
+        bars.b6.style.backgroundColor = 'var(--bar-suppressed)';
+        bars.bUpper.style.backgroundColor = 'var(--bar-suppressed)';
 
-        statusContent.innerHTML = "<strong>Currently Displaying: Clarinet (B4, 494 Hz).</strong> Closed cylindrical acoustic behavior: even-numbered harmonics (988 Hz, 1976 Hz) are suppressed, while odd harmonics dominate, producing a hollow, reedy tone.";
+        statusContent.innerHTML = "<strong>Currently Displaying: Clarinet (B4, 494 Hz).</strong> Closed cylindrical acoustic behavior: even harmonics (988, 1976, 2964 Hz) are strongly attenuated, while odd harmonics dominate, producing a hollow, reedy tone.";
       }
     }
 
-    btnSax.addEventListener('click', () => setInstrument('sax'));
-    btnClarinet.addEventListener('click', () => setInstrument('clarinet'));
-
-    btnPlay.addEventListener('click', () => {
+    function playTone() {
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
@@ -270,26 +291,26 @@
       }
 
       const now = audioCtx.currentTime;
-      const duration = 1.2;
+      const duration = 1.3;
 
-      // Amplitudes for partials based strictly on text descriptions
-      // Sax: 1f, 2f, 3f, 4f
-      // Clarinet: 1f, 3f prominent; 2f, 4f virtually inaudible
-      const weights = currentInstrument === 'sax' 
-        ? [0.5, 0.35, 0.22, 0.15] 
-        : [0.5, 0.02, 0.35, 0.01];
+      // Harmonic weights for 1st through 6th, plus an upper partial (7th/8th) cluster for brightness
+      // Saxophone: Full presence of 2 to 6 + audible upper edge
+      // Clarinet: Predominantly 1st, 3rd, 5th; 2nd, 4th, 6th virtually silenced
+      const weights = currentInstrument === 'sax'
+        ? [0.45, 0.28, 0.20, 0.14, 0.10, 0.08, 0.05]
+        : [0.45, 0.015, 0.26, 0.01, 0.16, 0.008, 0.01];
 
       weights.forEach((gainLevel, index) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
-        const harmonicFreq = FUNDAMENTAL * (index + 1);
+        const harmonicNumber = index + 1;
+        const harmonicFreq = FUNDAMENTAL * harmonicNumber;
 
         osc.type = 'sine';
         osc.frequency.setValueAtTime(harmonicFreq, now);
 
-        // Smooth envelope to prevent clicks (WCAG requirement)
         gain.gain.setValueAtTime(0.0001, now);
-        gain.gain.exponentialRampToValueAtTime(gainLevel * 0.4, now + 0.05);
+        gain.gain.exponentialRampToValueAtTime(gainLevel * 0.45, now + 0.05);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
 
         osc.connect(gain);
@@ -298,6 +319,18 @@
         osc.start(now);
         osc.stop(now + duration);
       });
+    }
+
+    btnSax.addEventListener('click', () => setInstrument('sax'));
+    btnClarinet.addEventListener('click', () => setInstrument('clarinet'));
+    btnPlay.addEventListener('click', playTone);
+
+    // Universal Spacebar trigger (prevents page scrolling when space is hit)
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.key === ' ') {
+        e.preventDefault();
+        playTone();
+      }
     });
   </script>
 </body>
